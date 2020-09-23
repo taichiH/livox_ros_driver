@@ -24,6 +24,7 @@
 
 #include "lddc.h"
 
+#include <algorithm>
 #include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
@@ -663,6 +664,288 @@ void Lddc::PrepareExit(void) {
     lds_->PrepareExit();
     lds_ = nullptr;
   }
+}
+
+vvoid Lddc::initializeDiagnostics()
+{
+  updater_.add("livox_tempereature", this, &Lddc::checkTemperature);
+  updater_.add("livox_internal_voltage", this, &Lddc::checkVoltage);
+  updater_.add("livox_motor_status", this, &Lddc::checkMotor);
+  updater_.add("livox_optical_window", this, &Lddc::checkDirty);
+  updater_.add("livox_firmware_staus", this, &Lddc::checkFirmware);
+  updater_.add("livox_pps_signal", this, &Lddc::checkPPSSignal);
+  updater_.add("livox_service_life", this, &Lddc::checkServiceLife);
+  updater_.add("livox_fan_status", this, &Lddc::checkFan);
+  updater_.add("livox_ptp_signal", this, &Lddc::checkPTPSignal);
+  updater_.add("livox_time_sync", this, &Lddc::checkTimeSync);
+  updater_.setHardwareID("livox");
+
+  timer_ = cur_node_->createTimer(ros::Rate(1.0), &Lddc::onDiagnosticsTimer, this);
+}
+
+void Lddc::onDiagnosticsTimer(const ros::TimerEvent & event)
+{
+  lidar_count_ = 0;
+  for (uint32_t i = 0; i < kMaxSourceLidar; ++i) {
+    if (lds_->lidars_[i].handle != kMaxSourceLidar) ++lidar_count_;
+  }
+  updater_.force_update();
+}
+
+void Lddc::checkTemperature(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (lidar_count_ <= 0) {
+    stat.summary(DiagStatus::WARN, "Not connected");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+
+  for (uint8_t i = 0; i < lidar_count_; ++i) {
+    int level = DiagStatus::OK;
+    TemperatureStatus status = static_cast<TemperatureStatus>(
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.temp_status);
+    if (status == TemperatureStatus::HighOrLow) {
+      level = DiagStatus::WARN;
+    } else if (status == TemperatureStatus::ExtremelyHighOrLow) {
+      level = DiagStatus::ERROR;
+    }
+
+    stat.add("broadcast code", lds_->lidars_[i].info.broadcast_code);
+    stat.add("status", temperature_dict_.at(level));
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, temperature_dict_.at(whole_level));
+}
+
+void Lddc::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (lidar_count_ <= 0) {
+    stat.summary(DiagStatus::WARN, "Not connected");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+
+  for (uint8_t i = 0; i < lidar_count_; ++i) {
+    int level = DiagStatus::OK;
+    VoltageStatus status = static_cast<VoltageStatus>(
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.volt_status);
+    if (status == VoltageStatus::High) {
+      level = DiagStatus::WARN;
+    } else if (status == VoltageStatus::ExtremelyHigh) {
+      level = DiagStatus::ERROR;
+    }
+
+    stat.add("broadcast code", lds_->lidars_[i].info.broadcast_code);
+    stat.add("status", motor_dict_.at(level));
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, voltage_dict_.at(whole_level));
+}
+
+void Lddc::checkMotor(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (lidar_count_ <= 0) {
+    stat.summary(DiagStatus::WARN, "Not connected");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+
+  for (uint8_t i = 0; i < lidar_count_; ++i) {
+    int level = DiagStatus::OK;
+    MotorStatus status = static_cast<MotorStatus>(
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.motor_status);
+    if (status == MotorStatus::Warning) {
+      level = DiagStatus::WARN;
+    } else if (status == MotorStatus::Error) {
+      level = DiagStatus::ERROR;
+    }
+
+    stat.add("broadcast code", lds_->lidars_[i].info.broadcast_code);
+    stat.add("status", motor_dict_.at(level));
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, motor_dict_.at(whole_level));
+}
+
+void Lddc::checkDirty(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (lidar_count_ <= 0) {
+    stat.summary(DiagStatus::WARN, "Not connected");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+
+  for (uint8_t i = 0; i < lidar_count_; ++i) {
+    int level = DiagStatus::OK;
+    DirtyStatus status = static_cast<DirtyStatus>(
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.dirty_warn);
+    if (status == DirtyStatus::DirtyOrBlocked) {
+      level = DiagStatus::WARN;
+    }
+
+    stat.add("broadcast code", lds_->lidars_[i].info.broadcast_code);
+    stat.add("status", dirty_dict_.at(level));
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, dirty_dict_.at(whole_level));
+}
+
+void Lddc::checkFirmware(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (lidar_count_ <= 0) {
+    stat.summary(DiagStatus::WARN, "Not connected");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+
+  for (uint8_t i = 0; i < lidar_count_; ++i) {
+    int level = DiagStatus::OK;
+    FirmwareStatus status = static_cast<FirmwareStatus>(
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.firmware_err);
+    if (status == FirmwareStatus::Abnormal) {
+      level = DiagStatus::ERROR;
+    }
+
+    stat.add("broadcast code", lds_->lidars_[i].info.broadcast_code);
+    stat.add("status", firmware_dict_.at(level));
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, firmware_dict_.at(whole_level));
+}
+
+void Lddc::checkPPSSignal(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (lidar_count_ <= 0) {
+    stat.summary(DiagStatus::WARN, "Not connected");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+
+  for (uint8_t i = 0; i < lidar_count_; ++i) {
+    int level = DiagStatus::OK;
+    PPSSignalStatus status = static_cast<PPSSignalStatus>(
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.pps_status);
+    if (status == PPSSignalStatus::NoSignal) {
+      level = DiagStatus::WARN;
+    }
+
+    stat.add("broadcast code", lds_->lidars_[i].info.broadcast_code);
+    stat.add("status", pps_dict_.at(level));
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, pps_dict_.at(whole_level));
+}
+
+void Lddc::checkServiceLife(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (lidar_count_ <= 0) {
+    stat.summary(DiagStatus::WARN, "Not connected");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+
+  for (uint8_t i = 0; i < lidar_count_; ++i) {
+    int level = DiagStatus::OK;
+    ServiceLifeStatus status = static_cast<ServiceLifeStatus>(
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.device_status);
+    if (status == ServiceLifeStatus::Warning) {
+      level = DiagStatus::WARN;
+    }
+
+    stat.add("broadcast code", lds_->lidars_[i].info.broadcast_code);
+    stat.add("status", life_dict_.at(level));
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, life_dict_.at(whole_level));
+}
+
+void Lddc::checkFan(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (lidar_count_ <= 0) {
+    stat.summary(DiagStatus::WARN, "Not connected");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+
+  for (uint8_t i = 0; i < lidar_count_; ++i) {
+    int level = DiagStatus::OK;
+    FanStatus status = static_cast<FanStatus>(
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.device_status);
+    if (status == FanStatus::Warning) {
+      level = DiagStatus::WARN;
+    }
+
+    stat.add("broadcast code", lds_->lidars_[i].info.broadcast_code);
+    stat.add("status", fan_dict_.at(level));
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, fan_dict_.at(whole_level));
+}
+
+void Lddc::checkPTPSignal(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (lidar_count_ <= 0) {
+    stat.summary(DiagStatus::WARN, "Not connected");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+
+  for (uint8_t i = 0; i < lidar_count_; ++i) {
+    int level = DiagStatus::OK;
+    PTPSignalStatus status = static_cast<PTPSignalStatus>(
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.device_status);
+    if (status == PTPSignalStatus::NoSignal) {
+      level = DiagStatus::WARN;
+    }
+
+    stat.add("broadcast code", lds_->lidars_[i].info.broadcast_code);
+    stat.add("status", ptp_dict_.at(level));
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, ptp_dict_.at(whole_level));
+}
+
+void Lddc::checkTimeSync(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (lidar_count_ <= 0) {
+    stat.summary(DiagStatus::WARN, "Not connected");
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+
+  for (uint8_t i = 0; i < lidar_count_; ++i) {
+    int level = DiagStatus::OK;
+    TimeSyncStatus status = static_cast<TimeSyncStatus>(
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.device_status);
+    if (status == TimeSyncStatus::Abnormal) {
+      level = DiagStatus::WARN;
+    }
+
+    stat.add("broadcast code", lds_->lidars_[i].info.broadcast_code);
+    stat.add("status", time_sync_dict_.at(level));
+    whole_level = std::max(whole_level, level);
+  }
+
+  stat.summary(whole_level, time_sync_dict_.at(whole_level));
 }
 
 } // namespace livox_ros

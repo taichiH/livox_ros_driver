@@ -27,6 +27,7 @@
 #include "lds.h"
 #include "livox_sdk.h"
 
+#include <diagnostic_updater/diagnostic_updater.h>
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 
@@ -57,9 +58,13 @@ public:
   void SetRosPub(ros::Publisher *pub) { global_pub_ = pub; };
   void SetPublishFrq(uint32_t frq) { publish_frq_ = frq; }
 
+  void initializeDiagnostics();
+
   Lds *lds_;
 
 private:
+  using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+
   int32_t GetPublishStartTime(LidarDevice *lidar, LidarDataQueue *queue,
       uint64_t *start_time, StoragePacket *storage_packet);
   uint32_t PublishPointcloud2(LidarDataQueue *queue, uint32_t packet_num,
@@ -76,6 +81,18 @@ private:
   void PollingLidarPointCloudData(uint8_t handle, LidarDevice *lidar);
   void PollingLidarImuData(uint8_t handle, LidarDevice *lidar);
 
+  void onDiagnosticsTimer(const ros::TimerEvent & event);
+  void checkTemperature(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkMotor(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkDirty(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkFirmware(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkPPSSignal(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkServiceLife(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkFan(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkPTPSignal(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkTimeSync(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
   uint8_t transfer_format_;
   uint8_t use_multi_topic_;
   uint8_t data_src_;
@@ -90,6 +107,41 @@ private:
 
   ros::NodeHandle *cur_node_;
   rosbag::Bag *bag_;
+
+  ros::Timer timer_;
+  diagnostic_updater::Updater updater_;
+  uint8_t lidar_count_; 
+
+  const std::map<int, const char *> temperature_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "High or Low"}, {DiagStatus::ERROR, "Extremely High or Extremely Low"}};
+
+  const std::map<int, const char *> voltage_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "High"}, {DiagStatus::ERROR, "Extremely High"}};
+
+  const std::map<int, const char *> motor_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "Warning State"}, {DiagStatus::ERROR, "Error State, Unable to Work"}};
+
+  const std::map<int, const char *> dirty_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "Dirty or Blocked"}, {DiagStatus::ERROR, "unused"}};
+
+  const std::map<int, const char *> firmware_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "unused"}, {DiagStatus::ERROR, "Firmware is Abnormal, Need to be Upgraded"}};
+
+  const std::map<int, const char *> pps_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "No PPS Signal"}, {DiagStatus::ERROR, "unused"}};
+
+  const std::map<int, const char *> life_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "Warning for Approaching the End of Service Life"}, {DiagStatus::ERROR, "unused"}};
+
+  const std::map<int, const char *> fan_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "Warning State"}, {DiagStatus::ERROR, "unused"}};
+
+  const std::map<int, const char *> ptp_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "No 1588 Signal"}, {DiagStatus::ERROR, "unused"}};
+
+  const std::map<int, const char *> time_sync_dict_ = {
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "System time synchronization is abnormal"}, {DiagStatus::ERROR, "unused"}};
+
 };
 
 } // namespace livox_ros

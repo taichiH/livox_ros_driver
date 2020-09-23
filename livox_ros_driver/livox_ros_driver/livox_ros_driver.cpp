@@ -108,6 +108,7 @@ int main(int argc, char **argv) {
     } else {
       ROS_ERROR("Init lds lidar fail!");
     }
+    lddc->initializeDiagnostics();
   } else if (data_src == kSourceRawHub) {
     ROS_INFO("Data Source is hub.");
 
@@ -166,6 +167,7 @@ int main(int argc, char **argv) {
   ros::Rate r(poll_freq);
   while (ros::ok()) {
     lddc->DistributeLidarData();
+    ros::spinOnce();
     r.sleep();
   }
 
