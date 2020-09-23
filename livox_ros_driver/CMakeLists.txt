@@ -67,8 +67,8 @@ endif (APR_FOUND)
 catkin_package(CATKIN_DEPENDS
 	roscpp rospy std_msgs message_runtime
 	pcl_ros
-  diagnostic_msgs
-  diagnostic_updater
+	diagnostic_msgs
+	diagnostic_updater
 	)
 
 #---------------------------------------------------------------------------------------
