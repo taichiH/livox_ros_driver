@@ -694,7 +694,7 @@ void Lddc::onDiagnosticsTimer(const ros::TimerEvent & event)
 
 void Lddc::checkTemperature(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (lidar_count_ <= 0) {
+  if (lidar_count_ == 0) {
     stat.summary(DiagStatus::WARN, "Not connected");
     return;
   }
@@ -721,7 +721,7 @@ void Lddc::checkTemperature(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void Lddc::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (lidar_count_ <= 0) {
+  if (lidar_count_ == 0) {
     stat.summary(DiagStatus::WARN, "Not connected");
     return;
   }
@@ -748,7 +748,7 @@ void Lddc::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void Lddc::checkMotor(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (lidar_count_ <= 0) {
+  if (lidar_count_ == 0) {
     stat.summary(DiagStatus::WARN, "Not connected");
     return;
   }
@@ -775,7 +775,7 @@ void Lddc::checkMotor(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void Lddc::checkDirty(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (lidar_count_ <= 0) {
+  if (lidar_count_ == 0) {
     stat.summary(DiagStatus::WARN, "Not connected");
     return;
   }
@@ -800,7 +800,7 @@ void Lddc::checkDirty(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void Lddc::checkFirmware(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (lidar_count_ <= 0) {
+  if (lidar_count_ == 0) {
     stat.summary(DiagStatus::WARN, "Not connected");
     return;
   }
@@ -825,7 +825,7 @@ void Lddc::checkFirmware(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void Lddc::checkPPSSignal(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (lidar_count_ <= 0) {
+  if (lidar_count_ == 0) {
     stat.summary(DiagStatus::WARN, "Not connected");
     return;
   }
@@ -850,7 +850,7 @@ void Lddc::checkPPSSignal(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void Lddc::checkServiceLife(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (lidar_count_ <= 0) {
+  if (lidar_count_ == 0) {
     stat.summary(DiagStatus::WARN, "Not connected");
     return;
   }
@@ -875,7 +875,7 @@ void Lddc::checkServiceLife(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void Lddc::checkFan(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (lidar_count_ <= 0) {
+  if (lidar_count_ == 0) {
     stat.summary(DiagStatus::WARN, "Not connected");
     return;
   }
@@ -900,7 +900,7 @@ void Lddc::checkFan(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void Lddc::checkPTPSignal(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (lidar_count_ <= 0) {
+  if (lidar_count_ == 0) {
     stat.summary(DiagStatus::WARN, "Not connected");
     return;
   }
@@ -925,7 +925,7 @@ void Lddc::checkPTPSignal(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void Lddc::checkTimeSync(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (lidar_count_ <= 0) {
+  if (lidar_count_ == 0) {
     stat.summary(DiagStatus::WARN, "Not connected");
     return;
   }
