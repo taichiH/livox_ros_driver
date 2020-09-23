@@ -666,7 +666,7 @@ void Lddc::PrepareExit(void) {
   }
 }
 
-vvoid Lddc::initializeDiagnostics()
+void Lddc::initializeDiagnostics()
 {
   updater_.add("livox_tempereature", this, &Lddc::checkTemperature);
   updater_.add("livox_internal_voltage", this, &Lddc::checkVoltage);
@@ -885,7 +885,7 @@ void Lddc::checkFan(diagnostic_updater::DiagnosticStatusWrapper & stat)
   for (uint8_t i = 0; i < lidar_count_; ++i) {
     int level = DiagStatus::OK;
     FanStatus status = static_cast<FanStatus>(
-      lds_->lidars_[i].info.status.status_code.lidar_error_code.device_status);
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.fan_status);
     if (status == FanStatus::Warning) {
       level = DiagStatus::WARN;
     }
@@ -910,7 +910,7 @@ void Lddc::checkPTPSignal(diagnostic_updater::DiagnosticStatusWrapper & stat)
   for (uint8_t i = 0; i < lidar_count_; ++i) {
     int level = DiagStatus::OK;
     PTPSignalStatus status = static_cast<PTPSignalStatus>(
-      lds_->lidars_[i].info.status.status_code.lidar_error_code.device_status);
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.ptp_status);
     if (status == PTPSignalStatus::NoSignal) {
       level = DiagStatus::WARN;
     }
@@ -935,7 +935,7 @@ void Lddc::checkTimeSync(diagnostic_updater::DiagnosticStatusWrapper & stat)
   for (uint8_t i = 0; i < lidar_count_; ++i) {
     int level = DiagStatus::OK;
     TimeSyncStatus status = static_cast<TimeSyncStatus>(
-      lds_->lidars_[i].info.status.status_code.lidar_error_code.device_status);
+      lds_->lidars_[i].info.status.status_code.lidar_error_code.time_sync_status);
     if (status == TimeSyncStatus::Abnormal) {
       level = DiagStatus::WARN;
     }

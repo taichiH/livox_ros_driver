@@ -30,6 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
 	message_generation
 	rosbag
 	pcl_ros
+	diagnostic_msgs
 	)
 
 ## Find pcl lib
@@ -66,6 +67,8 @@ endif (APR_FOUND)
 catkin_package(CATKIN_DEPENDS
 	roscpp rospy std_msgs message_runtime
 	pcl_ros
+	diagnostic_msgs
+  diagnostic_updater
 	)
 
 #---------------------------------------------------------------------------------------
