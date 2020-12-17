@@ -1,0 +1,6 @@
+<launch>
+  <node name="livox_distortion_filter" pkg="livox_ros_driver" type="livox_distortion_filter_node" output="screen">
+    <remap from="~input/custom_cloud" to="/livox/lidar" />
+    <remap from="~input/imu" to="/livox/imu" />
+  </node>
+</launch>

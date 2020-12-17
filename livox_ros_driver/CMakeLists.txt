@@ -25,7 +25,8 @@ find_package(Boost 1.54 REQUIRED COMPONENTS
 find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	rospy
-	sensor_msgs
+  sensor_msgs
+  geometry_msgs
 	std_msgs
 	message_generation
 	rosbag
@@ -144,17 +145,25 @@ add_executable(${PROJECT_NAME}_node
     ""
     )
 
+add_executable(livox_distortion_filter_node
+    ""
+    )
+
 #---------------------------------------------------------------------------------------
 # precompile macro and compile option
 #---------------------------------------------------------------------------------------
 target_compile_options(${PROJECT_NAME}_node
     PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wall>
     )
-
+# target_compile_options(livox_distortion_filter_node
+#     PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wall>
+#     )
+#
 #---------------------------------------------------------------------------------------
 # add projects that depend on
 #---------------------------------------------------------------------------------------
 add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(livox_distortion_filter_node ${PROJECT_NAME}_generate_messages_cpp)
 
 #---------------------------------------------------------------------------------------
 # source file
@@ -176,6 +185,12 @@ target_sources(${PROJECT_NAME}_node
 	common/comm/gps_protocol.cpp
 	)
 
+target_sources(livox_distortion_filter_node
+  PRIVATE
+  livox_distortion_filter/src/livox_distortion_filter_node.cpp
+  livox_distortion_filter/src/livox_distortion_filter.cpp
+  )
+
 #---------------------------------------------------------------------------------------
 # include file
 #---------------------------------------------------------------------------------------
@@ -193,6 +208,13 @@ target_include_directories(${PROJECT_NAME}_node
     livox_ros_driver
     )
 
+target_include_directories(livox_distortion_filter_node
+    PUBLIC
+    ${catkin_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+    livox_distortion_filter/include
+    )
+
 #---------------------------------------------------------------------------------------
 # link libraries
 #---------------------------------------------------------------------------------------
@@ -204,12 +226,16 @@ target_link_libraries(${PROJECT_NAME}_node
 	${APR_LIBRARIES}
 	)
 
+target_link_libraries(livox_distortion_filter_node
+	${Boost_LIBRARY}
+	${catkin_LIBRARIES}
+	${PCL_LIBRARIES}
+	)
 
-#---------------------------------------------------------------------------------------
-# Install
-#---------------------------------------------------------------------------------------
 
-install(TARGETS ${PROJECT_NAME}_node
+install(TARGETS
+  ${PROJECT_NAME}_node
+  livox_distortion_filter_node
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -225,5 +251,3 @@ install(
 #---------------------------------------------------------------------------------------
 # end of CMakeList.txt
 #---------------------------------------------------------------------------------------
-
-
